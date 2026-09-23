@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Analyser — Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 32px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .header h1 span {
+            color: #6366f1;
+        }
+
+        .header-btns {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+        }
+
+        .btn-outline:hover { border-color: #6366f1; color: #6366f1; }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+
+        .btn-primary:hover { background: #4f46e5; }
+
+        /* SUMMARY CARDS */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border-top: 3px solid transparent;
+        }
+
+        .card.total    { border-color: #6366f1; }
+        .card.errors   { border-color: #ef4444; }
+        .card.warnings { border-color: #f59e0b; }
+        .card.info     { border-color: #22c55e; }
+        .card.critical { border-color: #dc2626; }
+
+        .card .number {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .card.total    .number { color: #6366f1; }
+        .card.errors   .number { color: #ef4444; }
+        .card.warnings .number { color: #f59e0b; }
+        .card.info     .number { color: #22c55e; }
+        .card.critical .number { color: #dc2626; }
+
+        .card .label {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        /* CHARTS */
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .chart-box {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .chart-box h3 {
+            font-size: 15px;
+            color: #94a3b8;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .chart-box canvas {
+            max-height: 220px;
+        }
+
+        /* LOG TABLE */
+        .table-section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .table-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .search-box {
+            padding: 8px 14px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 13px;
+            outline: none;
+            width: 220px;
+        }
+
+        .search-box:focus { border-color: #6366f1; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 10px 12px;
+            color: #64748b;
+            font-weight: 600;
+            border-bottom: 1px solid #334155;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #1e293b;
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover { background: #0f172a; }
+
+        tbody td {
+            padding: 10px 12px;
+            color: #cbd5e1;
+        }
+
+        .badge {
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-ERROR    { background: #7f1d1d; color: #fca5a5; }
+        .badge-WARNING  { background: #78350f; color: #fcd34d; }
+        .badge-INFO     { background: #14532d; color: #86efac; }
+        .badge-CRITICAL { background: #450a0a; color: #f87171; }
+        .badge-DEBUG    { background: #1e3a5f; color: #93c5fd; }
+        .badge-UNKNOWN  { background: #1e293b; color: #94a3b8; }
+
+        .no-logs {
+            text-align: center;
+            color: #475569;
+            padding: 40px;
+            font-size: 15px;
+        }
+
+        .filename-tag {
+            font-size: 13px;
+            color: #64748b;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>🔍 Log Analyser <span>Dashboard</span>
+            <span class="filename-tag">📄 {{ filename }}</span>
+        </h1>
+        <div class="header-btns">
+            <a href="/" class="btn btn-outline">← Upload New File</a>
+            <a href="/export" class="btn btn-primary">⬇ Export CSV</a>
+        </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="cards">
+        <div class="card total">
+            <div class="number">{{ summary.total }}</div>
+            <div class="label">Total Logs</div>
+        </div>
+        <div class="card errors">
+            <div class="number">{{ summary.errors }}</div>
+            <div class="label">Errors</div>
+        </div>
+        <div class="card warnings">
+            <div class="number">{{ summary.warnings }}</div>
+            <div class="label">Warnings</div>
+        </div>
+        <div class="card info">
+            <div class="number">{{ summary.info }}</div>
+            <div class="label">Info</div>
+        </div>
+        <div class="card critical">
+            <div class="number">{{ summary.critical }}</div>
+            <div class="label">Critical</div>
+        </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="charts">
+        <div class="chart-box">
+            <h3>📊 Log Levels Distribution</h3>
+            <canvas id="barChart"></canvas>
+        </div>
+        <div class="chart-box">
+            <h3>🥧 Log Breakdown</h3>
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div>
+
+    <!-- LOG TABLE -->
+    <div class="table-section">
+        <div class="table-header">
+            <h3>📋 Log Entries ({{ logs|length }})</h3>
+            <input
+                class="search-box"
+                type="text"
+                id="tableSearch"
+                placeholder="Filter table..."
+                onkeyup="filterTable()"
+            >
+        </div>
+
+        {% if logs %}
+        <table id="logTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Timestamp</th>
+                    <th>Level</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ log.timestamp or '—' }}</td>
+                    <td><span class="badge badge-{{ log.level }}">{{ log.level }}</span></td>
+                    <td>{{ log.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-logs">No logs found matching your filters.</div>
+        {% endif %}
+    </div>
+
+    <!-- CHART JS -->
+    <script>
+        const labels  = ['Errors', 'Warnings', 'Info', 'Critical', 'Debug'];
+        const data    = [
+            {{ summary.errors }},
+            {{ summary.warnings }},
+            {{ summary.info }},
+            {{ summary.critical }},
+            {{ summary.debug }}
+        ];
+        const colors  = ['#ef4444', '#f59e0b', '#22c55e', '#dc2626', '#3b82f6'];
+
+        // Bar Chart
+        new Chart(document.getElementById('barChart'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Count',
+                    data: data,
+                    backgroundColor: colors,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+                }
+            }
+        });
+
+        // Pie Chart
+        new Chart(document.getElementById('pieChart'), {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors,
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#94a3b8', padding: 16, font: { size: 12 } }
+                    }
+                }
+            }
+        });
+
+        // Table search filter
+        function filterTable() {
+            const input = document.getElementById("tableSearch").value.toLowerCase();
+            const rows  = document.querySelectorAll("#logTable tbody tr");
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(input) ? "" : "none";
+            });
+        }
+    </script>
+
+</body>
+</html>s
