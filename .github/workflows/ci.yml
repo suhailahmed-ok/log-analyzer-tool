@@ -30,7 +30,11 @@ jobs:
         run: docker build -t my-logscope-app .
 
       - name: run docker container
-        run: docker run --rm my-logscope-app
+        run: |
+          docker run -d --name logscope-test -p 5000:5000 my-logscope-app
+          sleep 5
+          curl --fail http://localhost:5000/
+          docker stop logscope-test
 
       - name: check docker hub credentials
         if: github.ref == 'refs/heads/main'
