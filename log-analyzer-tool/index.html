@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Analyser Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 48px;
+            width: 500px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 2px dashed #334155;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: #6366f1;
+            background: #1a2744;
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-area label {
+            cursor: pointer;
+            display: block;
+        }
+
+        .upload-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .upload-text span {
+            color: #6366f1;
+            font-weight: 600;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6366f1;
+            font-weight: 500;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .filters select,
+        .filters input {
+            flex: 1;
+            padding: 10px 14px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .filters select:focus,
+        .filters input:focus {
+            border-color: #6366f1;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 14px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button[type="submit"]:hover {
+            background: #4f46e5;
+        }
+
+        .error-msg {
+            background: #7f1d1d;
+            color: #fca5a5;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🔍</div>
+        <h1>Log Analyser Tool</h1>
+        <p class="subtitle">Upload your log file to analyse errors, warnings and more</p>
+
+        {% if error %}
+        <div class="error-msg">⚠️ {{ error }}</div>
+        {% endif %}
+
+        <form action="/analyse" method="POST" enctype="multipart/form-data">
+
+            <div class="upload-area">
+                <label for="logfile">
+                    <div class="upload-icon">📂</div>
+                    <div class="upload-text">
+                        <span>Click to upload</span> your log file<br>
+                        Supports .log and .txt files
+                    </div>
+                    <div class="file-name" id="file-name">No file chosen</div>
+                </label>
+                <input type="file" id="logfile" name="logfile" accept=".log,.txt" onchange="updateFileName(this)">
+            </div>
+
+            <div class="filters">
+                <select name="level">
+                    <option value="ALL">All Levels</option>
+                    <option value="ERROR">Errors Only</option>
+                    <option value="WARNING">Warnings Only</option>
+                    <option value="INFO">Info Only</option>
+                    <option value="CRITICAL">Critical Only</option>
+                    <option value="DEBUG">Debug Only</option>
+                </select>
+                <input type="text" name="keyword" placeholder="Search keyword...">
+            </div>
+
+            <button type="submit">Analyse Logs →</button>
+        </form>
+    </div>
+
+    <script>
+        function updateFileName(input) {
+            const fileName = input.files[0] ? input.files[0].name : "No file chosen";
+            document.getElementById("file-name").textContent = fileName;
+        }
+    </script>
+</body>
+</html>
